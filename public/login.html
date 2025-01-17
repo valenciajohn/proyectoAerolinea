@@ -50,8 +50,21 @@
 
 			try {
 				const { data } = await axios.post('/api/v1/users/login', { email, contrasena });
-				localStorage.setItem('token', data.msg);
-				window.location.href = '/profile';
+				const token = data.msg;
+
+				// Guardar token en localStorage
+				localStorage.setItem('token', token);
+
+				// Decodificar el token para obtener el rol del usuario
+				const payload = JSON.parse(atob(token.split('.')[1]));
+				const userRole = payload.id_rol;
+
+				// Redirigir según el rol del usuario
+				if (userRole === 2) {
+					window.location.href = '/dashboard-superadmin';
+				} else {
+					window.location.href = '/profile';
+				}
 			} catch (error) {
 				// Capturar el mensaje de error correctamente
 				const errorMessage = error.response?.data?.msg || 'Error inesperado. Intente de nuevo.';

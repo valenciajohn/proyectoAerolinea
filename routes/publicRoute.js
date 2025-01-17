@@ -18,4 +18,9 @@ router.get('/register', (req, res) => {
     res.sendFile(publicPath + "/register.html")
 })
 
+router.get('/dashboard-superadmin', (req, res) => {
+    res.sendFile(publicPath + "/dashboardSuperadmin.html");
+});
+
+
 export default router

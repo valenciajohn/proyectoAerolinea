@@ -25,7 +25,16 @@
         if (!token) {
             window.location.href = "/login"
         }
+		
+		// Decodificar el token para verificar el rol
+        const payload = JSON.parse(atob(token.split('.')[1])); // Decodifica la parte payload del token (Base64)
+        const userRole = payload.id_rol; // id_rol viene del token JWT
 
+        // Redirigir si es Superadmin
+        if (userRole === 2) { 
+            window.location.href = "/dashboard-superadmin";
+        }
+		
         logout.addEventListener('click', () => {
             localStorage.removeItem('token')
             window.location.href = "/login"

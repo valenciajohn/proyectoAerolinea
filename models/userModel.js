@@ -19,8 +19,9 @@ const create = async ({ nombre, apellido, email, contrasena, fecha_nacimiento, g
 const findOneByEmail = async (email) => {
     const query = {
         text: `
-        SELECT * FROM usuarios
-        WHERE email = $1
+         SELECT * FROM usuarios u
+         INNER JOIN roles r ON u.id_rol = r.id_rol
+         WHERE u.email = $1
         `,
         values: [email]
     }
@@ -38,17 +39,36 @@ const findOneByUserName = async (usuario) => {
     return rows[0]
 }
 
+// Traer todos los usuarios con sus roles
 const findAll = async () => {
     const query = {
-        text: 'SELECT * FROM usuarios'		
-    }
-    const { rows } = await db.query(query)
-    return rows
-}
+        text: `
+        SELECT u.nombre, u.apellido, u.email, r.nombre_rol 
+        FROM usuarios u
+        INNER JOIN roles r ON u.id_rol = r.id_rol
+        `
+    };
+    const { rows } = await db.query(query);
+    return rows;
+};
+
+const updateUser = async ({ nombre, apellido, email, id_rol }) => {
+    const query = {
+        text: `
+            UPDATE usuarios
+            SET nombre = $1, apellido = $2, email = $3, id_rol = $4
+            WHERE email = $3
+        `,
+        values: [nombre, apellido, email, id_rol]
+    };
+    await db.query(query);
+};
+
 
 export const UserModel = {
     create,
     findOneByEmail,
 	findOneByUserName,
-	findAll
+	findAll,
+	updateUser
 }

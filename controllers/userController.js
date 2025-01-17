@@ -89,7 +89,7 @@ const login = async (req, res) => {
             return res.status(401).json({ msg: "Credenciales inválidas" });
         }
 		
-		const token = jwt.sign({ email: user.email},
+		const token = jwt.sign({ email: user.email, id_rol: user.id_rol},
             process.env.JWT_SECRET,
             {
                 expiresIn: "1h"
@@ -127,10 +127,104 @@ const findAll = async (req, res) => {
     }
 }
 
+// /api/v1/users/registerSuperAdmin (Solo superadmin)
+const registerUserBySuperAdmin = async (req, res) => {
+    try {
+        const { nombre, apellido, email, contrasena, fecha_nacimiento, genero, celular, pais_nacimiento, usuario, id_rol } = req.body;
+
+        // Validamos que el rol sea solo uno de los roles válidos (solo para superadmin)
+        if (req.id_rol !== 2) {
+			return res.status(403).json({ ok: false, msg: "No tienes permisos para realizar esta acción" });
+		}
+		
+		if (!nombre || !apellido || !email || !contrasena || !fecha_nacimiento || !genero || !celular || !pais_nacimiento || !usuario || !id_rol) {
+            return res.status(400).json({ ok: false, msg: "Todos los campos son requeridos." });
+        }
+
+        // Comprobar si el usuario ya existe
+        const userExist = await UserModel.findOneByEmail(email);
+        if (userExist) {
+            return res.status(409).json({ ok: false, msg: 'El email ya está registrado.' });
+        }
+
+        const hashedPassword = await bcryptjs.hash(contrasena, 10);
+
+        const newUser = await UserModel.create({ 
+            nombre, apellido, email, contrasena: hashedPassword, fecha_nacimiento, genero, celular, pais_nacimiento, usuario, id_rol 
+        });
+
+        return res.status(201).json({ ok: true, msg: "Usuario registrado correctamente" });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ ok: false, msg: 'Error en el servidor' });
+    }
+};
+
+// /api/v1/users/searchByEmail
+const searchByEmail = async (req, res) => {
+    try {
+        const { email } = req.query;
+        
+        if (!email) {
+            return res.status(400).json({ ok: false, msg: "El email es requerido para la búsqueda." });
+        }
+
+        // Validar el email
+        if (!validator.isEmail(email)) {
+            return res.status(400).json({ok: false, msg: 'El email ingresado no es válido.'});
+        }
+		
+		console.log(`Buscando usuario con email: ${email}`);
+		
+        const user = await UserModel.findOneByEmail(email);
+		
+        if (!user) { // Verificar si el usuario es null o undefined
+            return res.status(404).json({ ok: false, msg: 'Usuario no encontrado.' });
+        }
+
+        return res.json({ ok: true, users: [user] });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ ok: false, msg: 'Error del servidor' });
+    }
+};
+
+const updateUser = async (req, res) => {
+    try {
+        const { nombre, apellido, email, id_rol } = req.body;
+
+        if (!nombre || !apellido || !email || !id_rol) {
+            return res.status(400).json({ ok: false, msg: "Todos los campos son requeridos." });
+        }
+
+        // Validar el formato del email
+        if (!validator.isEmail(email)) {
+            return res.status(400).json({ ok: false, msg: "El email no es válido." });
+        }
+
+        // Verificar si el email ya existe (y no es el del usuario actual)
+        const existingUser = await UserModel.findOneByEmail(email);
+        if (existingUser && existingUser.email !== email) {
+            return res.status(400).json({ ok: false, msg: "El email ya está en uso." });
+        }
+
+        // Actualizar el usuario
+        await UserModel.updateUser({ nombre, apellido, email, id_rol });
+        return res.json({ ok: true, msg: "Usuario actualizado correctamente." });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ ok: false, msg: "Error al actualizar el usuario." });
+    }
+};
+
 
 export const UserController = {
     register,
 	login,
 	profile,
-	findAll
+	findAll,
+	registerUserBySuperAdmin,
+	searchByEmail,
+	updateUser
 }
