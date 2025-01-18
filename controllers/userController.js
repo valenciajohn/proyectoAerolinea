@@ -193,9 +193,11 @@ const searchByEmail = async (req, res) => {
 const updateUser = async (req, res) => {
     try {
         const { nombre, apellido, email, id_rol } = req.body;
+		console.log("Datos recibidos para actualizar:", req.body);
 
         if (!nombre || !apellido || !email || !id_rol) {
             return res.status(400).json({ ok: false, msg: "Todos los campos son requeridos." });
+		
         }
 
         // Validar el formato del email
@@ -205,19 +207,44 @@ const updateUser = async (req, res) => {
 
         // Verificar si el email ya existe (y no es el del usuario actual)
         const existingUser = await UserModel.findOneByEmail(email);
-        if (existingUser && existingUser.email !== email) {
-            return res.status(400).json({ ok: false, msg: "El email ya está en uso." });
-        }
+        if (!existingUser) {
+			return res.status(404).json({ ok: false, msg: "Usuario no encontrado para actualizar." });
+		}
 
         // Actualizar el usuario
         await UserModel.updateUser({ nombre, apellido, email, id_rol });
+		console.log(`Usuario con email ${email} actualizado.`);
         return res.json({ ok: true, msg: "Usuario actualizado correctamente." });
     } catch (error) {
-        console.error(error);
+        console.error("Error al actualizar usuario:", error);
         return res.status(500).json({ ok: false, msg: "Error al actualizar el usuario." });
     }
 };
 
+const deleteUserByEmail = async (req, res) => {
+	//console.log('Usuario autenticado:', req.email);
+    const { email } = req.query; 
+	const authenticatedUserEmail = req.email;
+	//console.log(authenticatedUserEmail)
+	//console.log(req.query);
+	
+    try {
+		
+		// Verificar si el usuario intenta eliminarse a sí mismo
+        if (email === authenticatedUserEmail) {
+            return res.status(403).json({  ok: false, msg: 'No puedes eliminar tu propia cuenta.' });
+        }
+		
+        // Busca al usuario en la base de datos
+         const result = await UserModel.deleteByEmail(email);
+
+        // Responde con un mensaje de éxito
+        res.json({ ok: true, ...result })
+    } catch (error) {
+       console.error('Error al eliminar usuario:', error.message);
+        res.status(500).json({ ok: false, msg: error.message });
+    }
+};
 
 export const UserController = {
     register,
@@ -226,5 +253,6 @@ export const UserController = {
 	findAll,
 	registerUserBySuperAdmin,
 	searchByEmail,
-	updateUser
+	updateUser,
+	deleteUserByEmail
 }

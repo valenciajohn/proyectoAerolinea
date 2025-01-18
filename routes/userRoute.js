@@ -17,7 +17,8 @@ router.post('/registerSuperAdmin', verifyToken, verifySuperAdmin, UserController
 // Buscar usuario por correo
 router.get('/searchByEmail', verifyToken, verifySuperAdmin, UserController.searchByEmail); 
 //actualizar usuario
-router.put('/users', verifyToken, verifySuperAdmin, UserController.updateUser);
-
+router.put('/updateUser', verifyToken, verifySuperAdmin, UserController.updateUser);
+//Eliminar usuarrio
+router.delete('/deleteByEmail', verifyToken, verifySuperAdmin, UserController.deleteUserByEmail);
 
 export default router;

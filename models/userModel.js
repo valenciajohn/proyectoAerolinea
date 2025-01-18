@@ -52,6 +52,7 @@ const findAll = async () => {
     return rows;
 };
 
+//Actualizar usuarios por email
 const updateUser = async ({ nombre, apellido, email, id_rol }) => {
     const query = {
         text: `
@@ -61,14 +62,34 @@ const updateUser = async ({ nombre, apellido, email, id_rol }) => {
         `,
         values: [nombre, apellido, email, id_rol]
     };
-    await db.query(query);
+     const { rowCount, rows } = await db.query(query);
+	 if (rowCount === 0) {
+        throw new Error("No se pudo actualizar el usuario.");
+    }
+    console.log("Consulta ejecutada:", query);
+	return rows[0]; // Devuelve el usuario actualizado
 };
 
+// Eliminar usuario por email
+const deleteByEmail = async (email) => {
+    const query = {
+        text: `DELETE FROM usuarios WHERE email = $1`,
+        values: [email],
+    };
+    const { rowCount } = await db.query(query);
+
+    if (rowCount === 0) {
+        throw new Error("Usuario no encontrado o ya eliminado.");
+    }
+
+    return { msg: "Usuario eliminado exitosamente." };
+};
 
 export const UserModel = {
     create,
     findOneByEmail,
 	findOneByUserName,
 	findAll,
-	updateUser
+	updateUser,
+	deleteByEmail
 }

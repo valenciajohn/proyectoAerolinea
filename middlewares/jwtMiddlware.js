@@ -4,15 +4,16 @@ import { UserModel } from '../models/userModel.js'
 export const verifyToken = (req, res, next) => {
     let token = req.headers.authorization;
 
-    if (!token) {
+    token = token.split(" ")[1];
+	
+	 if (!token) {
         return res.status(401).json({ error: "Token no recibido" });
     }
-
-    token = token.split(" ")[1];
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.email = decoded.email;
+		console.log(req.email)
         req.id_rol = decoded.id_rol; // Agregar id_rol al request
         next();
     } catch (error) {
