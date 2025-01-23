@@ -17,6 +17,10 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(express.static('public'))
 
+app.get('/', (req, res) => {
+    res.redirect('/login');
+});
+
 app.use('/', publicRouter)
 app.use('/api/v1/users', userRouter)
 app.use('/', dashboardRoute);
